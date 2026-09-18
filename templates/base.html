@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Attendify</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="toast-container"></div>
+    <div style="display:none;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="server-flash" data-category="{{ category }}" data-message="{{ message }}"></div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    {% if session.get('user_id') %}
+    <div class="app-layout">
+        <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-name">Attendify</div>
+            </div>
+            <nav class="sidebar-nav">
+                {% if session.get('role') == 'teacher' %}
+                <a href="{{ url_for('teacher_dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ url_for('teacher_classes') }}" class="nav-item">My Classes</a>
+                <a href="{{ url_for('teacher_reports') }}" class="nav-item">Reports</a>
+                <a href="{{ url_for('teacher_profile') }}" class="nav-item">Profile</a>
+                {% else %}
+                <a href="{{ url_for('student_dashboard') }}" class="nav-item">Dashboard</a>
+                <a href="{{ url_for('student_classes') }}" class="nav-item">My Classes</a>
+                <a href="{{ url_for('student_attendance') }}" class="nav-item">Attendance</a>
+                <a href="{{ url_for('student_reports') }}" class="nav-item">Reports</a>
+                <a href="{{ url_for('student_profile') }}" class="nav-item">Profile</a>
+                {% endif %}
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-block" style="justify-content:center;">Logout</a>
+            </div>
+        </aside>
+        
+        <main class="main-wrapper">
+            <header class="topbar">
+                <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+                <div style="font-weight: 500; margin-left:auto;">
+                    {% if session.get('name') %}
+                        Hello, {{ session.get('name') }} 👋
+                    {% endif %}
+                </div>
+            </header>
+            <div class="content-area">
+    {% else %}
+    <div class="auth-layout">
+    {% endif %}
+
+        {% block content %}{% endblock %}
+
+    {% if session.get('user_id') %}
+            </div>
+        </main>
+    </div>
+    {% else %}
+    </div>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

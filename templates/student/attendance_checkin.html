@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Mark Attendance</h2>
+        <p class="page-subtitle">Confirm your attendance for this session</p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 500px; border-top: 6px solid var(--primary);">
+    <div class="card-body" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 16px;">🎓</div>
+        <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px;">{{ class_.class_name }}</h3>
+        <p class="text-sec mb-4">{{ class_.subject }}</p>
+        
+        <div style="background: var(--bg-alt); padding: 16px; border-radius: var(--radius); margin: 24px 0; border: 1px dashed var(--primary);">
+            <div class="stat-label">SESSION CODE</div>
+            <div style="font-size: 2rem; font-weight: 700; color: var(--primary); font-family: monospace;">{{ att_session.session_code }}</div>
+        </div>
+        
+        <form method="POST" action="{{ url_for('student_checkin', session_code=att_session.session_code) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-primary btn-block mt-4" style="padding: 14px; font-size: 1.1rem; background: var(--success);">Confirm Attendance</button>
+            <a href="{{ url_for('student_classes') }}" class="btn btn-secondary btn-block mt-2">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

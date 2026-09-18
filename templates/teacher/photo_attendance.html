@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 40px auto;">
+    <div class="card-header flex justify-between items-center">
+        <h2>Classroom Photo Attendance</h2>
+        <a href="{{ url_for('teacher_attendance_session', session_id=att_session.id) }}" class="btn btn-secondary">Back to Session</a>
+    </div>
+    
+    <div class="card-body">
+        <div style="background: var(--bg-alt); padding: 16px; border-radius: var(--radius); margin-bottom: 24px; border: 1px solid var(--border);">
+            <p><strong>Class:</strong> {{ class_.class_name }} ({{ class_.class_code }})</p>
+            <p><strong>Session:</strong> {{ att_session.session_code }}</p>
+            <p class="text-sec" style="font-size: 0.9rem; margin-top: 8px;">Upload a clear photograph of the classroom. Ensure faces are visible.</p>
+        </div>
+        
+        <form id="photo-attendance-form" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label class="form-label" for="photo_upload">Classroom Photo</label>
+                <input type="file" id="photo_upload" name="file" class="form-control" accept=".jpg, .jpeg, .png, .webp" required>
+                <small class="text-sec mt-2">Supported formats: JPG, PNG, WEBP. Max size: 10MB.</small>
+            </div>
+            
+            <div id="upload-error" style="display: none; background: #fee2e2; color: #b91c1c; padding: 12px; border-radius: 4px; margin-bottom: 16px;"></div>
+            
+            <button type="submit" id="process-btn" class="btn btn-primary w-100" style="padding: 12px; font-size: 1.1rem;">Process Photo</button>
+        </form>
+        
+        <!-- Loading State -->
+        <div id="loading-state" style="display: none; text-align: center; margin: 40px 0;">
+            <div class="spinner" style="width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+            <h3 id="loading-text">Uploading...</h3>
+            <p class="text-sec">Analyzing classroom photo...</p>
+        </div>
+        
+        <!-- Results Container -->
+        <div id="results-container" style="display: none; margin-top: 32px;">
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 32px 0;">
+            <h3>Recognition Complete</h3>
+            
+            <!-- Summary Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 16px; margin: 24px 0;">
+                <div style="background: var(--bg-alt); padding: 16px; border-radius: var(--radius); text-align: center; border: 1px solid var(--border);">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="stat-detected">0</div>
+                    <div class="stat-label">Faces Detected</div>
+                </div>
+                <div style="background: var(--bg-alt); padding: 16px; border-radius: var(--radius); text-align: center; border: 1px solid var(--border);">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--success);" id="stat-recognized">0</div>
+                    <div class="stat-label">Recognized</div>
+                </div>
+                <div style="background: var(--bg-alt); padding: 16px; border-radius: var(--radius); text-align: center; border: 1px solid var(--border);">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--danger);" id="stat-unknown">0</div>
+                    <div class="stat-label">Unknown</div>
+                </div>
+                <div style="background: var(--bg-alt); padding: 16px; border-radius: var(--radius); text-align: center; border: 1px solid var(--border);">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--primary);" id="stat-eligible">0</div>
+                    <div class="stat-label">Eligible Students</div>
+                </div>
+            </div>
+            
+            <!-- Annotated Image Canvas -->
+            <div style="margin: 32px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: #000; text-align: center; position: relative;">
+                <canvas id="annotated-canvas" style="max-width: 100%; height: auto; display: block; margin: 0 auto;"></canvas>
+            </div>
+            
+            <!-- Results Table -->
+            <div style="overflow-x: auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--bg-alt); border-bottom: 2px solid var(--border);">
+                            <th style="padding: 12px; text-align: left;">Face</th>
+                            <th style="padding: 12px; text-align: left;">Student</th>
+                            <th style="padding: 12px; text-align: left;">Student ID</th>
+                            <th style="padding: 12px; text-align: left;">Similarity</th>
+                            <th style="padding: 12px; text-align: left;">Class Eligibility</th>
+                            <th style="padding: 12px; text-align: left;">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-tbody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="save-attendance-container" class="mt-4" style="display: none; background: #eef2ff; border: 1px solid #c7d2fe; border-radius: var(--radius); padding: 24px; text-align: center;">
+                <p style="margin-bottom: 16px; font-size: 1.1rem;">Ready to save attendance for <strong id="save-eligible-count">0</strong> eligible students.</p>
+                <button id="mark-attendance-btn" class="btn btn-primary" style="padding: 12px 32px; font-size: 1.1rem; background: var(--success); border-color: var(--success);">Mark Attendance</button>
+                <div id="save-loading" style="display: none; margin-top: 16px;">
+                    <span class="spinner" style="display: inline-block; width: 20px; height: 20px; border: 3px solid #c7d2fe; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle;"></span>
+                    <span style="margin-left: 8px;">Saving...</span>
+                </div>
+            </div>
+            
+            <div id="save-success-container" class="mt-4" style="display: none; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius); padding: 24px; text-align: center; color: #065f46;">
+                <h3 style="margin-top: 0;">Attendance Saved</h3>
+                <p id="save-success-msg" style="margin-bottom: 0; font-size: 1.1rem;"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+
+<script>
+document.getElementById('photo-attendance-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const fileInput = document.getElementById('photo_upload');
+    const errorDiv = document.getElementById('upload-error');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showError("Please select a photo.");
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    
+    // Client-side validation
+    const validExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const ext = file.name.split('.').pop().toLowerCase();
+    
+    if (!validExtensions.includes(ext)) {
+        showError("Unsupported file type. Please use JPG, PNG, or WEBP.");
+        return;
+    }
+    
+    // 10MB client-side limit
+    if (file.size > 10 * 1024 * 1024) {
+        showError("File size exceeds 10MB limit.");
+        return;
+    }
+    
+    // Hide form, show loading
+    errorDiv.style.display = 'none';
+    document.getElementById('photo-attendance-form').style.display = 'none';
+    document.getElementById('results-container').style.display = 'none';
+    
+    const loadingState = document.getElementById('loading-state');
+    loadingState.style.display = 'block';
+    
+    // Read file for canvas preview (async)
+    const reader = new FileReader();
+    const imageObj = new Image();
+    
+    reader.onload = function(evt) {
+        imageObj.onload = function() {
+            // Once loaded, we have imageObj ready for drawing
+            uploadPhoto(file, imageObj);
+        }
+        imageObj.src = evt.target.result;
+    }
+    reader.readAsDataURL(file);
+});
+
+function showError(msg) {
+    const errorDiv = document.getElementById('upload-error');
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    
+    document.getElementById('photo-attendance-form').style.display = 'block';
+    document.getElementById('loading-state').style.display = 'none';
+}
+
+function uploadPhoto(file, imageObj) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('csrf_token', document.getElementById('csrf_token').value);
+    
+    fetch("{{ url_for('teacher_photo_recognize', class_id=class_.id, session_id=att_session.id) }}", {
+        method: 'POST',
+        headers: {
+            // X-CSRFToken header as backup for Flask-WTF if form data isn't enough, though form data should work
+            'X-CSRFToken': document.getElementById('csrf_token').value
+        },
+        body: formData
+    })
+    .then(response => response.json().catch(() => {
+        throw new Error("Server returned an invalid response.");
+    }))
+    .then(data => {
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('photo-attendance-form').style.display = 'block';
+        
+        if (!data.success) {
+            showError(data.error || "Unknown server error.");
+            return;
+        }
+        
+        renderResults(data, imageObj);
+    })
+    .catch(error => {
+        showError("An error occurred during network request: " + error.message);
+    });
+}
+
+function renderResults(data, imageObj) {
+    document.getElementById('results-container').style.display = 'block';
+    
+    // Setup Canvas
+    const canvas = document.getElementById('annotated-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = imageObj.width;
+    canvas.height = imageObj.height;
+    
+    ctx.drawImage(imageObj, 0, 0);
+    ctx.lineWidth = Math.max(2, Math.floor(canvas.width / 500));
+    
+    let eligibleCount = 0;
+    const tbody = document.getElementById('results-tbody');
+    tbody.innerHTML = '';
+    
+    // Sort results to group duplicates intuitively (e.g. by student name)
+    const sortedResults = [...data.results].sort((a, b) => {
+        const nameA = a.student_name || 'ZZZ';
+        const nameB = b.student_name || 'ZZZ';
+        return nameA.localeCompare(nameB);
+    });
+    
+    sortedResults.forEach((face, idx) => {
+        // Compute Eligible Count
+        if (face.recognized && face.enrolled_in_class && !face.already_present && !face.duplicate_in_photo) {
+            eligibleCount++;
+        }
+        
+        // Draw Bounding Box
+        if (face.bbox) {
+            const x = face.bbox.x;
+            const y = face.bbox.y;
+            const w = face.bbox.width;
+            const h = face.bbox.height;
+            
+            const isEligible = (face.recognized && face.enrolled_in_class && !face.already_present && !face.duplicate_in_photo);
+            
+            if (face.recognized) {
+                ctx.strokeStyle = isEligible ? '#22c55e' : (face.already_present || face.duplicate_in_photo ? '#94a3b8' : '#eab308');
+                ctx.fillStyle = isEligible ? '#22c55e' : (face.already_present || face.duplicate_in_photo ? '#94a3b8' : '#eab308');
+            } else {
+                ctx.strokeStyle = '#ef4444';
+                ctx.fillStyle = '#ef4444';
+            }
+            
+            ctx.strokeRect(x, y, w, h);
+            
+            // Label box
+            const labelText = face.recognized ? face.student_name : `Unknown Face #${face.face_index}`;
+            const fontSize = Math.max(14, Math.floor(canvas.width / 50));
+            ctx.font = `${fontSize}px sans-serif`;
+            
+            const textWidth = ctx.measureText(labelText).width;
+            ctx.fillRect(x, Math.max(0, y - fontSize - 6), textWidth + 8, fontSize + 6);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(labelText, x + 4, Math.max(fontSize, y - 4));
+        }
+        
+        // Add Table Row
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid var(--border)';
+        
+        const faceName = face.recognized ? face.student_name : '—';
+        const faceId = face.recognized ? face.student_id : '—';
+        const sim = face.similarity ? face.similarity.toFixed(4) : '—';
+        
+        let classLabel = '—';
+        let classColor = 'var(--text)';
+        if (face.recognized) {
+            if (face.enrolled_in_class) {
+                if (face.already_present) {
+                    classLabel = 'Already present';
+                    classColor = '#64748b'; // slate-500
+                } else if (face.duplicate_in_photo) {
+                    classLabel = 'Duplicate in photo';
+                    classColor = '#eab308'; // yellow-500
+                } else {
+                    classLabel = 'Eligible';
+                    classColor = 'var(--success)';
+                }
+            } else {
+                classLabel = 'Not enrolled';
+                classColor = 'var(--danger)';
+            }
+        }
+        
+        let resultLabel = 'Unknown';
+        let resultColor = 'var(--danger)';
+        if (face.recognized) {
+            resultLabel = 'Recognized';
+            resultColor = 'var(--success)';
+        }
+        
+        tr.innerHTML = `
+            <td style="padding: 12px;">#${face.face_index}</td>
+            <td style="padding: 12px; font-weight: 500;">${faceName}</td>
+            <td style="padding: 12px; font-family: monospace;">${faceId}</td>
+            <td style="padding: 12px;">${sim}</td>
+            <td style="padding: 12px; color: ${classColor};">${classLabel}</td>
+            <td style="padding: 12px;">
+                <span class="badge" style="background: ${resultColor}; color: white; padding: 4px 8px; font-size: 0.85rem;">
+                    ${resultLabel}
+                </span>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+    
+    if (data.results.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" style="padding: 24px; text-align: center; color: var(--text-sec);">No faces detected in the photo.</td>`;
+        tbody.appendChild(tr);
+    }
+    
+    // Update Stats
+    document.getElementById('stat-detected').textContent = data.total_detected_faces || 0;
+    document.getElementById('stat-recognized').textContent = data.recognized_faces || 0;
+    document.getElementById('stat-unknown').textContent = data.unknown_faces || 0;
+    document.getElementById('stat-eligible').textContent = eligibleCount;
+    
+    // Save Controls
+    const saveContainer = document.getElementById('save-attendance-container');
+    const saveBtn = document.getElementById('mark-attendance-btn');
+    
+    if (eligibleCount > 0 && data.save_token) {
+        saveContainer.style.display = 'block';
+        document.getElementById('save-eligible-count').textContent = eligibleCount;
+        
+        // Remove existing listener to prevent duplicate binds
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        
+        newSaveBtn.addEventListener('click', function() {
+            newSaveBtn.disabled = true;
+            document.getElementById('save-loading').style.display = 'block';
+            
+            fetch("{{ url_for('teacher_photo_save', class_id=class_.id, session_id=att_session.id) }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.getElementById('csrf_token').value
+                },
+                body: JSON.stringify({ save_token: data.save_token })
+            })
+            .then(res => res.json())
+            .then(saveData => {
+                newSaveBtn.disabled = false;
+                document.getElementById('save-loading').style.display = 'none';
+                
+                if (!saveData.success) {
+                    alert("Error saving attendance: " + (saveData.error || "Unknown error"));
+                    return;
+                }
+                
+                saveContainer.style.display = 'none';
+                document.getElementById('save-success-container').style.display = 'block';
+                
+                let msg = `${saveData.marked_count} students marked present.`;
+                if (saveData.already_present_count > 0) {
+                    msg += ` ${saveData.already_present_count} students were already present.`;
+                }
+                document.getElementById('save-success-msg').textContent = msg;
+            })
+            .catch(err => {
+                newSaveBtn.disabled = false;
+                document.getElementById('save-loading').style.display = 'none';
+                alert("Network error while saving: " + err.message);
+            });
+        });
+    } else {
+        saveContainer.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

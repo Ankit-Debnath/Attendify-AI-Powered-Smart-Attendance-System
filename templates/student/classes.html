@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">My Classes</h2>
+        <p class="page-subtitle">View the classes you are currently enrolled in</p>
+    </div>
+    <a href="{{ url_for('student_class_join') }}" class="btn btn-primary">+ Join Class</a>
+</div>
+
+{% if classes %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;">
+    {% for c in classes %}
+    <div class="card" style="display: flex; flex-direction: column; margin-bottom: 0;">
+        <div class="card-body" style="flex: 1;">
+            <div class="flex justify-between items-center mb-2">
+                <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-main);">{{ c.class_name }}</h3>
+                <span class="badge badge-info" style="font-family: monospace; letter-spacing: 1px;">{{ c.class_code }}</span>
+            </div>
+            
+            <div class="text-sec mb-4" style="font-size: 0.95rem;">
+                <div><strong>Subject:</strong> {{ c.subject }}</div>
+                <div><strong>Teacher:</strong> {{ c.teacher_name }}</div>
+                <div><strong>Joined:</strong> {{ c.joined_at[:10] }}</div>
+            </div>
+            
+            <div class="flex gap-2 mt-4" style="border-top: 1px solid var(--border); padding-top: 16px;">
+                <form action="{{ url_for('student_class_leave', class_id=c.id) }}" method="POST" onsubmit="return confirm('Leave this class? You will lose access to future sessions.');" style="display:inline;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-secondary">Leave Class</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 40px 20px;">
+    <div style="font-size: 3rem; margin-bottom: 16px;">🎓</div>
+    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 8px;">Not enrolled in any classes</h3>
+    <p class="text-sec mb-4">Join a class using a code provided by your teacher.</p>
+    <a href="{{ url_for('student_class_join') }}" class="btn btn-primary">Join a Class</a>
+</div>
+{% endif %}
+{% endblock %}

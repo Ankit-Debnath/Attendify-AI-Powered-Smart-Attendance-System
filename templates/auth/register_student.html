@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-box">
+    <h2 class="auth-title">Student Registration</h2>
+    <p class="auth-subtitle">Create your student account</p>
+    
+    <form method="POST" action="{{ url_for('register_student') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="form-group">
+            <label class="form-label" for="name">Full Name</label>
+            <input class="form-control" type="text" id="name" name="name" required>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" type="email" id="email" name="email" required>
+        </div>
+        
+        <div class="flex gap-4">
+            <div class="form-group" style="flex:1;">
+                <label class="form-label" for="student_id">Student ID</label>
+                <input class="form-control" type="text" id="student_id" name="student_id" required>
+            </div>
+            
+            <div class="form-group" style="flex:1;">
+                <label class="form-label" for="course">Course</label>
+                <input class="form-control" type="text" id="course" name="course" required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="semester">Semester</label>
+            <input class="form-control" type="text" id="semester" name="semester" required>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="password-wrap">
+                <input class="form-control" type="password" id="password" name="password" required minlength="8">
+                <button type="button" class="password-toggle" onclick="togglePassword('password')">SHOW</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="confirm_password">Confirm Password</label>
+            <div class="password-wrap">
+                <input class="form-control" type="password" id="confirm_password" name="confirm_password" required minlength="8">
+                <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">SHOW</button>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block mt-4" style="padding: 12px; font-size: 1rem;">Register as Student</button>
+    </form>
+    
+    <div class="text-center mt-4" style="font-size: 0.9rem; color: var(--text-sec);">
+        Already have an account? <a href="{{ url_for('login') }}">Sign In</a>
+    </div>
+</div>
+{% endblock %}

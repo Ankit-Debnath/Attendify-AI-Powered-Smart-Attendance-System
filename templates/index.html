@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-box" style="max-width: 600px; text-align: center;">
+    <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--primary); margin-bottom: 16px;">Attendify</h1>
+    <h2 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 16px;">Smart Attendance Management System</h2>
+    <p style="color: var(--text-sec); margin-bottom: 32px; font-size: 1.1rem;">A simple, smart, and efficient way to manage student and teacher attendance.</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <a href="{{ url_for('login') }}" class="btn btn-primary" style="padding: 14px;">Sign In</a>
+        <a href="{{ url_for('register_student') }}" class="btn btn-secondary" style="padding: 14px;">Student Registration</a>
+        <a href="{{ url_for('register_teacher') }}" class="btn btn-secondary" style="padding: 14px; grid-column: span 2;">Teacher Registration</a>
+    </div>
+</div>
+{% endblock %}

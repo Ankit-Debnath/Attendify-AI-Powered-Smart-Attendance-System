@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Good morning, {{ user.name }} 👋</h2>
+        <p class="page-subtitle">Here's what's happening with your classes today.</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Classes</div>
+        <div class="stat-value">{{ stats.total_classes }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Students</div>
+        <div class="stat-value">{{ stats.total_students }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Sessions</div>
+        <div class="stat-value">{{ stats.total_sessions }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Overall Attendance</div>
+        <div class="stat-value" style="
+            {% if stats.overall_percentage == None %}color:var(--text-sec);
+            {% elif stats.overall_percentage >= 75 %}color:var(--success);
+            {% elif stats.overall_percentage >= 50 %}color:var(--warning);
+            {% else %}color:var(--danger);{% endif %}">
+            {% if stats.overall_percentage != None %}{{ "%.1f"|format(stats.overall_percentage) }}%{% else %}N/A{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Attendance Overview</div>
+    <div class="card-body">
+        {% if stats.trend_data %}
+        <div style="height: 300px; width: 100%;">
+            <canvas id="trendChart"></canvas>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                const data = {{ stats.trend_data|tojson }};
+                const labels = data.map(d => d.date);
+                const percentages = data.map(d => d.percentage);
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Attendance %',
+                            data: percentages,
+                            borderColor: '#4F46E5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#4F46E5'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, grid: { color: '#E2E8F0' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            });
+        </script>
+        {% else %}
+        <p class="text-sec">No completed attendance sessions to show trends.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="flex gap-4" style="flex-wrap: wrap;">
+    <div class="card" style="flex: 1; min-width: 300px;">
+        <div class="card-header">Class-wise Attendance</div>
+        <div class="table-responsive">
+            {% if stats.class_stats %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Students</th>
+                        <th>Sessions</th>
+                        <th>Attendance %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in stats.class_stats %}
+                    <tr>
+                        <td><strong>{{ c.class_name }}</strong> <br><small class="text-sec">{{ c.subject }}</small></td>
+                        <td>{{ c.enrolled }}</td>
+                        <td>{{ c.sessions }}</td>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div style="font-weight: 600; 
+                                {% if c.percentage == None %}color:var(--text-sec);
+                                {% elif c.percentage >= 75 %}color:var(--success);
+                                {% elif c.percentage >= 50 %}color:var(--warning);
+                                {% else %}color:var(--danger);{% endif %}">
+                                {% if c.percentage != None %}{{ "%.1f"|format(c.percentage) }}%{% else %}N/A{% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="card-body">
+                <p class="text-sec">You have not created any classes yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Student-wise Analytics</div>
+    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        {% if stats.student_stats %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Class</th>
+                    <th>Sessions</th>
+                    <th>Attendance %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for st in stats.student_stats %}
+                <tr>
+                    <td><strong>{{ st.name }}</strong></td>
+                    <td style="font-family: monospace;">{{ st.student_id }}</td>
+                    <td>{{ st.class_name }}</td>
+                    <td>{{ st.attended }} / {{ st.sessions }}</td>
+                    <td>
+                        <div style="font-weight: 600; 
+                            {% if st.percentage == None %}color:var(--text-sec);
+                            {% elif st.percentage >= 75 %}color:var(--success);
+                            {% elif st.percentage >= 50 %}color:var(--warning);
+                            {% else %}color:var(--danger);{% endif %}">
+                            {% if st.percentage != None %}{{ "%.1f"|format(st.percentage) }}%{% else %}N/A{% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body">
+            <p class="text-sec">No students enrolled in your classes yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

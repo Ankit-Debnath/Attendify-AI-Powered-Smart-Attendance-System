@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Welcome back, {{ user.name }} 👋</h2>
+        <p class="page-subtitle">My Attendance Analytics</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Classes Joined</div>
+        <div class="stat-value">{{ stats.total_classes }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Sessions</div>
+        <div class="stat-value">{{ stats.total_sessions }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Attended</div>
+        <div class="stat-value">{{ stats.total_attended }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Overall %</div>
+        <div class="stat-value" style="
+            {% if stats.overall_percentage == None %}color:var(--text-sec);
+            {% elif stats.overall_percentage >= 75 %}color:var(--success);
+            {% elif stats.overall_percentage >= 50 %}color:var(--warning);
+            {% else %}color:var(--danger);{% endif %}">
+            {% if stats.overall_percentage != None %}{{ "%.1f"|format(stats.overall_percentage) }}%{% else %}N/A{% endif %}
+        </div>
+        
+        {% if stats.overall_percentage != None %}
+        <div class="progress-container">
+            <div class="progress-bar" style="width: {{ stats.overall_percentage }}%; 
+                {% if stats.overall_percentage >= 75 %}background: var(--success);
+                {% elif stats.overall_percentage >= 50 %}background: var(--warning);
+                {% else %}background: var(--danger);{% endif %}">
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">My Attendance Trend</div>
+    <div class="card-body">
+        {% if stats.trend_data %}
+        <div style="height: 300px; width: 100%;">
+            <canvas id="studentTrendChart"></canvas>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const ctx = document.getElementById('studentTrendChart').getContext('2d');
+                const data = {{ stats.trend_data|tojson }};
+                const labels = data.map(d => d.date);
+                const percentages = data.map(d => d.percentage);
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Attendance %',
+                            data: percentages,
+                            borderColor: '#2563EB',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#2563EB'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, grid: { color: '#E2E8F0' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            });
+        </script>
+        {% else %}
+        <p class="text-sec">No completed attendance sessions to show trends.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="flex gap-4" style="flex-wrap: wrap;">
+    <div class="card" style="flex: 1; min-width: 300px;">
+        <div class="card-header">Class-wise Attendance</div>
+        <div class="table-responsive">
+            {% if stats.class_stats %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Sessions</th>
+                        <th>Attended</th>
+                        <th>Percentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in stats.class_stats %}
+                    <tr>
+                        <td><strong>{{ c.class_name }}</strong></td>
+                        <td>{{ c.sessions }}</td>
+                        <td>{{ c.attended }}</td>
+                        <td>
+                            <div style="font-weight: 600; 
+                                {% if c.percentage == None %}color:var(--text-sec);
+                                {% elif c.percentage >= 75 %}color:var(--success);
+                                {% elif c.percentage >= 50 %}color:var(--warning);
+                                {% else %}color:var(--danger);{% endif %}">
+                                {% if c.percentage != None %}{{ "%.1f"|format(c.percentage) }}%{% else %}N/A{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="card-body">
+                <p class="text-sec">You have not joined any classes yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Recent History</div>
+    <div class="table-responsive">
+        {% if stats.history %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in stats.history %}
+                <tr>
+                    <td>{{ h.s_date }}</td>
+                    <td>{{ h.class_name }}</td>
+                    <td><span class="badge badge-success">{{ h.status|title }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body">
+            <p class="text-sec">No recent attendance records.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

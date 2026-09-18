@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Teacher Profile</h2>
+        <p class="page-subtitle">Manage your personal information and account settings</p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 800px;">
+    <div class="card-body">
+        <div class="flex gap-4 items-center" style="flex-wrap: wrap; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 24px;">
+            {% if user.profile_picture %}
+                <img src="{{ url_for('static', filename='uploads/profile_pics/' ~ user.profile_picture) }}" alt="Profile Picture" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; box-shadow: var(--shadow); border: 2px solid var(--border);">
+            {% else %}
+                <div style="width: 120px; height: 120px; border-radius: 50%; background: var(--bg-alt); display: flex; align-items: center; justify-content: center; color: var(--text-sec); font-weight: 500; font-size: 2rem; border: 2px solid var(--border);">
+                    {{ user.name[0] }}
+                </div>
+            {% endif %}
+            
+            <div style="flex: 1;">
+                <h3 style="font-size: 1.5rem; margin-bottom: 4px;">{{ user.name }}</h3>
+                <p class="text-sec" style="margin-bottom: 16px;">{{ user.subject }} &bull; {{ user.department }}</p>
+                <div class="flex gap-2">
+                    <a href="{{ url_for('teacher_profile_edit') }}" class="btn btn-primary">Edit Profile</a>
+                    {% if user.profile_picture %}
+                    <form action="{{ url_for('teacher_remove_picture') }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to remove your profile picture?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-secondary">Remove Picture</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <div>
+                <p class="stat-label">Full Name</p>
+                <p style="font-weight: 500;">{{ user.name }}</p>
+            </div>
+            <div>
+                <p class="stat-label">Email Address</p>
+                <p style="font-weight: 500;">{{ user.email }}</p>
+            </div>
+            <div>
+                <p class="stat-label">Subject</p>
+                <p style="font-weight: 500;">{{ user.subject }}</p>
+            </div>
+            <div>
+                <p class="stat-label">Department</p>
+                <p style="font-weight: 500;">{{ user.department }}</p>
+            </div>
+            <div>
+                <p class="stat-label">Account Created</p>
+                <p style="font-weight: 500;">{{ user.created_at }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="max-width: 800px; border-color: #FCA5A5;">
+    <div class="card-header" style="color: var(--danger); background: #FEF2F2; border-bottom-color: #FCA5A5;">Danger Zone</div>
+    <div class="card-body">
+        <p class="mb-4" style="color: var(--text-sec);">Once you delete your account, there is no going back. Please be certain.</p>
+        <form action="{{ url_for('teacher_delete_account') }}" method="POST" onsubmit="return confirm('This action permanently deletes your account and cannot be undone. Are you sure you want to proceed?');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-danger">Delete Account</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 40px auto; text-align: center; border-top: 6px solid {% if att_session.status == 'active' %}var(--primary){% else %}var(--text-sec){% endif %};">
+    <div class="card-body" style="padding: 40px 24px;">
+        {% if att_session.status == 'active' %}
+            <div class="badge badge-success mb-4" style="font-size: 0.9rem; padding: 6px 16px;">Active Session</div>
+        {% else %}
+            <div class="badge mb-4" style="font-size: 0.9rem; padding: 6px 16px; background: var(--text-sec); color: white;">Session Ended</div>
+        {% endif %}
+        
+        <h2 class="page-title">{{ class_.class_name }}</h2>
+        <p class="text-sec mb-4">{{ class_.subject }}</p>
+
+        {% if att_session.status == 'active' %}
+            <p class="text-sec mb-2">Students can scan this QR code OR manually enter the Session Code.</p>
+            {% if qr_b64 %}
+                <div style="margin: 20px 0;">
+                    <img src="data:image/png;base64,{{ qr_b64 }}" alt="Attendance QR Code" style="max-width: 250px; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; background: white;">
+                </div>
+            {% endif %}
+        {% endif %}
+        
+        <div style="background: var(--bg-alt); padding: 24px; border-radius: var(--radius); margin: 24px 0; border: 1px dashed {% if att_session.status == 'active' %}var(--primary){% else %}var(--border){% endif %};">
+            <div class="stat-label">SESSION CODE</div>
+            <div style="font-size: 4rem; font-weight: 800; letter-spacing: 4px; color: {% if att_session.status == 'active' %}var(--primary){% else %}var(--text-sec){% endif %}; font-family: monospace;">{{ att_session.session_code }}</div>
+        </div>
+        
+        <div class="flex justify-between items-center" style="background: #F8FAFC; padding: 16px; border-radius: var(--radius); margin-bottom: 24px; border: 1px solid var(--border);">
+            {% if att_session.status == 'active' %}
+                <div>
+                    <p class="stat-label" style="margin-bottom: 4px;">Time Remaining</p>
+                    <p id="countdown" style="font-size: 1.5rem; font-weight: 700; color: var(--danger); font-family: monospace;">Loading...</p>
+                </div>
+            {% endif %}
+            <div {% if att_session.status != 'active' %}style="width: 100%; text-align: center;"{% endif %}>
+                <p class="stat-label" style="margin-bottom: 4px;">Students Present</p>
+                <p style="font-size: 1.5rem; font-weight: 700; color: var(--success);">{{ count }}</p>
+            </div>
+        </div>
+        
+        {% if att_session.status == 'active' %}
+            <a href="{{ url_for('teacher_photo_attendance', class_id=class_.id, session_id=att_session.id) }}" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem; margin-bottom: 12px; text-decoration: none;">Classroom Photo Attendance</a>
+            <form action="{{ url_for('teacher_attendance_end', session_id=att_session.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn btn-danger btn-block" style="padding: 14px; font-size: 1.1rem;">End Session Now</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if att_session.status == 'active' %}
+<script>
+    const expiresAt = new Date("{{ att_session.expires_at }} UTC").getTime();
+    
+    const x = setInterval(function() {
+        const now = new Date().getTime();
+        const distance = expiresAt - now;
+        
+        if (distance < 0) {
+            clearInterval(x);
+            document.getElementById("countdown").innerHTML = "EXPIRED";
+            document.getElementById("countdown").style.color = "var(--text-sec)";
+            // Optional: Auto reload to show ended state
+            window.location.reload();
+            return;
+        }
+        
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        
+        document.getElementById("countdown").innerHTML = 
+            (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+            (seconds < 10 ? "0" + seconds : seconds);
+            
+    }, 1000);
+    
+    // Auto refresh to update student count
+    setTimeout(function() {
+        window.location.reload();
+    }, 10000);
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">My Attendance Report</h2>
+        <p class="page-subtitle">Generate and download your attendance analytics</p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body" style="background: var(--bg-alt);">
+        <form method="GET" action="{{ url_for('student_reports') }}" class="flex gap-4 items-end" style="flex-wrap: wrap;">
+            <div class="form-group" style="margin-bottom: 0; flex: 2; min-width: 200px;">
+                <label class="form-label" for="class_id">Select Class</label>
+                <select class="form-control" name="class_id" id="class_id">
+                    <option value="">[ All Classes ]</option>
+                    {% for c in classes %}
+                    <option value="{{ c.id }}" {% if class_id == c.id %}selected{% endif %}>{{ c.class_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                <label class="form-label" for="start_date">From Date</label>
+                <input class="form-control" type="date" name="start_date" id="start_date" value="{{ start_date or '' }}">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                <label class="form-label" for="end_date">To Date</label>
+                <input class="form-control" type="date" name="end_date" id="end_date" value="{{ end_date or '' }}">
+            </div>
+            
+            <div style="flex: 0;">
+                <button type="submit" class="btn btn-primary" style="padding: 10px 24px; height: 42px;">Generate Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if report %}
+<div class="flex justify-between items-center mb-4">
+    <h3 style="font-size: 1.25rem; font-weight: 600;">Report Summary</h3>
+    <div class="flex gap-2">
+        <a href="{{ url_for('student_export_csv', class_id=class_id, start_date=start_date, end_date=end_date) }}" class="btn btn-secondary" style="border-color: var(--success); color: var(--success);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Export CSV
+        </a>
+        <a href="{{ url_for('student_export_pdf', class_id=class_id, start_date=start_date, end_date=end_date) }}" class="btn btn-secondary" style="border-color: var(--danger); color: var(--danger);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Export PDF
+        </a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Sessions</div>
+        <div class="stat-value">{{ report.summary.sessions }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Attended</div>
+        <div class="stat-value">{{ report.summary.present }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Overall Attendance</div>
+        <div class="stat-value" style="
+            {% if report.summary.overall_percentage == None %}color:var(--text-sec);
+            {% elif report.summary.overall_percentage >= 75 %}color:var(--success);
+            {% elif report.summary.overall_percentage >= 50 %}color:var(--warning);
+            {% else %}color:var(--danger);{% endif %}">
+            {% if report.summary.overall_percentage != None %}{{ "%.2f"|format(report.summary.overall_percentage) }}%{% else %}N/A{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Attendance History</div>
+    <div class="table-responsive">
+        {% if report.history %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Class</th>
+                    <th>Session Code</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in report.history %}
+                <tr>
+                    <td>{{ h.date }}</td>
+                    <td><strong>{{ h.class_name }}</strong></td>
+                    <td style="font-family: monospace;">{{ h.session }}</td>
+                    <td><span class="badge badge-success">{{ h.status|title }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="card-body">
+            <p class="text-sec">No attendance records found for the selected filters.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

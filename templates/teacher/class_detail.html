@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">{{ class_.class_name }}</h2>
+        <p class="page-subtitle">{{ class_.subject }} &bull; {{ class_.course }}</p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{{ url_for('teacher_classes') }}" class="btn btn-secondary">Back to Classes</a>
+        <a href="{{ url_for('teacher_attendance_start', class_id=class_.id) }}" class="btn btn-primary" style="background: var(--success);">Start Attendance</a>
+    </div>
+</div>
+
+<div class="flex gap-4" style="flex-wrap: wrap;">
+    <div class="card" style="flex: 1; min-width: 300px;">
+        <div class="card-header">Class Details</div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <p class="stat-label">Class Code</p>
+                    <p style="font-family: monospace; font-size: 1.25rem; font-weight: 700; color: var(--primary);">{{ class_.class_code }}</p>
+                </div>
+                <div>
+                    <p class="stat-label">Subject</p>
+                    <p style="font-weight: 500;">{{ class_.subject }}</p>
+                </div>
+                <div>
+                    <p class="stat-label">Course</p>
+                    <p style="font-weight: 500;">{{ class_.course }}</p>
+                </div>
+                <div>
+                    <p class="stat-label">Semester</p>
+                    <p style="font-weight: 500;">{{ class_.semester }}</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 flex gap-2" style="border-top: 1px solid var(--border);">
+                <a href="{{ url_for('teacher_class_edit', class_id=class_.id) }}" class="btn btn-secondary">Edit Settings</a>
+                <a href="{{ url_for('teacher_class_attendance_history', class_id=class_.id) }}" class="btn btn-secondary">Attendance History</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card" style="flex: 2; min-width: 300px;">
+        <div class="card-header flex justify-between items-center">
+            <span>Enrolled Students</span>
+            <span class="badge badge-info">{{ students|length }} Students</span>
+        </div>
+        <div class="table-responsive">
+            {% if students %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Student ID</th>
+                        <th>Course / Sem</th>
+                        <th>Joined At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td><strong>{{ student.name }}</strong></td>
+                        <td>{{ student.student_id }}</td>
+                        <td>{{ student.course }} / {{ student.semester }}</td>
+                        <td class="text-sec">{{ student.joined_at[:10] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="card-body">
+                <p class="text-sec">No students enrolled yet. Share the class code <strong style="color: var(--primary);">{{ class_.class_code }}</strong> with your students.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

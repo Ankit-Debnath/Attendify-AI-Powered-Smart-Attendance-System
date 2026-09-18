@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-box">
+    <h2 class="auth-title">Welcome Back</h2>
+    <p class="auth-subtitle">Log in to your Attendify account</p>
+    
+    <form method="POST" action="{{ url_for('login') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="form-group">
+            <label class="form-label" for="email">Email address</label>
+            <input class="form-control" type="email" id="email" name="email" placeholder="name@example.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="password-wrap">
+                <input class="form-control" type="password" id="password" name="password" placeholder="Enter your password" required>
+                <button type="button" class="password-toggle" onclick="togglePassword('password')">SHOW</button>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block mt-4" style="padding: 12px; font-size: 1rem;">Sign In</button>
+    </form>
+    
+    <div class="text-center mt-4" style="font-size: 0.9rem; color: var(--text-sec);">
+        Don't have an account? <br>
+        <a href="{{ url_for('register_student') }}">Register as Student</a> or 
+        <a href="{{ url_for('register_teacher') }}">Register as Teacher</a>
+    </div>
+</div>
+{% endblock %}
