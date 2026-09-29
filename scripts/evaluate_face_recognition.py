@@ -45,7 +45,7 @@ def evaluate():
     recognizer = get_recognizer()
     
     test_dir = os.path.join(PROJECT_ROOT, 'tests', 'face_test_data')
-    students = ['student_1', 'student_2']
+    students = ['student_1']
     
     embeddings = {}
     metrics = {

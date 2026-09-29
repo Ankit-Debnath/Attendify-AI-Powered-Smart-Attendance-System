@@ -633,3 +633,9 @@ a:hover {
 .text-sec {
   color: var(--text-sec);
 }
+
+/* Remove Edge native password reveal icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

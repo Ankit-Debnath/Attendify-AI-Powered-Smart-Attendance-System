@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="auth-box">
+<div class="auth-box" style="max-width: 600px;">
     <h2 class="auth-title">Student Registration</h2>
     <p class="auth-subtitle">Create your student account</p>
     
-    <form method="POST" action="{{ url_for('register_student') }}">
+    <form method="POST" action="{{ url_for('register_student') }}" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-group">
             <label class="form-label" for="name">Full Name</label>
@@ -47,6 +47,42 @@
             <div class="password-wrap">
                 <input class="form-control" type="password" id="confirm_password" name="confirm_password" required minlength="8">
                 <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">SHOW</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 32px; margin-bottom: 24px; padding: 16px; background: var(--bg-alt); border-radius: 8px; border: 1px solid var(--border);">
+            <h3 style="margin-bottom: 12px; font-size: 1.1rem;">Face Enrollment</h3>
+            <p style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-sec);">
+                Upload or capture exactly 5 clear photos of your face. These photos are used only to create your attendance face profile.
+            </p>
+            <p style="margin-bottom: 16px; font-size: 0.85rem; color: var(--text-sec);">
+                Please provide slightly different natural views:<br>
+                1. Front-facing<br>
+                2. Slightly turned left<br>
+                3. Slightly turned right<br>
+                4. Slightly different distance/expression<br>
+                5. Another clear front/slight-angle image
+            </p>
+
+            <div class="form-group">
+                <label class="form-label" for="photo_1">Photo 1</label>
+                <input class="form-control" type="file" id="photo_1" name="photo_1" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="photo_2">Photo 2</label>
+                <input class="form-control" type="file" id="photo_2" name="photo_2" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="photo_3">Photo 3</label>
+                <input class="form-control" type="file" id="photo_3" name="photo_3" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="photo_4">Photo 4</label>
+                <input class="form-control" type="file" id="photo_4" name="photo_4" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="photo_5">Photo 5</label>
+                <input class="form-control" type="file" id="photo_5" name="photo_5" accept="image/*" required>
             </div>
         </div>
         

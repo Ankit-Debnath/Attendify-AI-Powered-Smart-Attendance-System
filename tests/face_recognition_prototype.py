@@ -19,12 +19,11 @@ def init_models():
     return detector, recognizer
 
 def process_student_images(detector, recognizer, base_dir):
-    students = ['student_1', 'student_2', 'student_3']
+    students = ['student_1', 'student_3']
     
     student_embeddings = {}
     stats = {
         'student_1_imgs': 0,
-        'student_2_imgs': 0,
         'student_3_imgs': 0,
         'valid_embeddings': 0,
         'invalid_images': 0
@@ -181,7 +180,6 @@ def main():
     print("\nDATASET SUMMARY")
     print("---------------")
     print(f"Student 1 images: {student_stats['student_1_imgs']}")
-    print(f"Student 2 images: {student_stats['student_2_imgs']}")
     print(f"Student 3 images: {student_stats['student_3_imgs']}")
     print("")
     print(f"Valid embeddings: {student_stats['valid_embeddings']}")

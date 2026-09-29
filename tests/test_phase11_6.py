@@ -23,7 +23,8 @@ class TestPhase11_6(unittest.TestCase):
         
         # Initialize database
         init_db(cls.db_path)
-        cls.client = app.test_client()
+        from tests.csrf_wrapper import CSRFTestClient
+        cls.client = CSRFTestClient(app.test_client())
         
     @classmethod
     def tearDownClass(cls):

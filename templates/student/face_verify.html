@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 40px auto; text-align: center;">
+    <div class="card-body" style="padding: 40px 24px;">
+        <h2 class="page-title">Face Verification</h2>
+        <p class="text-sec mb-4">Class: {{ class_.class_name }}</p>
+
+        <div class="alert alert-info" style="margin-bottom: 24px; text-align: left;">
+            <strong>Security Challenge:</strong><br>
+            {% if challenge == 'straight' %}
+            Please look <b>straight</b> at the camera.
+            {% elif challenge == 'left' %}
+            Please turn your head slightly to the <b>left</b>.
+            {% elif challenge == 'right' %}
+            Please turn your head slightly to the <b>right</b>.
+            {% endif %}
+        </div>
+
+        <video id="video" width="100%" autoplay playsinline style="border-radius: 8px; margin-bottom: 16px; background: #000;"></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+
+        <form id="verifyForm" action="{{ url_for('student_face_verify') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="file" name="face_image" id="faceImage" style="display: none;">
+            <button type="button" id="captureBtn" class="btn btn-primary btn-block" style="padding: 14px; font-size: 1.1rem;">Capture & Verify</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('captureBtn');
+    const form = document.getElementById('verifyForm');
+    const faceImageInput = document.getElementById('faceImage');
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        .then(stream => {
+            video.srcObject = stream;
+        })
+        .catch(err => {
+            console.error("Error accessing camera:", err);
+            alert("Camera access is required for attendance.");
+        });
+
+    captureBtn.addEventListener('click', () => {
+        captureBtn.disabled = true;
+        captureBtn.innerText = "Processing...";
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob((blob) => {
+            const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            faceImageInput.files = dataTransfer.files;
+
+            // Stop video track
+            video.srcObject.getTracks().forEach(track => track.stop());
+
+            form.submit();
+        }, 'image/jpeg', 0.9);
+    });
+</script>
+{% endblock %}

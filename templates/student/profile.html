@@ -17,7 +17,7 @@
                     {{ user.name[0] }}
                 </div>
             {% endif %}
-            
+
             <div style="flex: 1;">
                 <h3 style="font-size: 1.5rem; margin-bottom: 4px;">{{ user.name }}</h3>
                 <p class="text-sec" style="margin-bottom: 16px;">{{ user.course }} &bull; Semester {{ user.semester }}</p>
@@ -32,7 +32,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
             <div>
                 <p class="stat-label">Full Name</p>
@@ -59,6 +59,47 @@
                 <p style="font-weight: 500;">{{ user.created_at }}</p>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="card" style="max-width: 800px;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>Face Recognition Profile</span>
+        <span class="badge" style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem;">Reference Photos: {{ references|length }}/5</span>
+    </div>
+    <div class="card-body">
+        <p class="text-sec" style="margin-bottom: 16px;">Your reference photos help Attendify recognize you in classroom attendance photographs.<br>Use clear photos where your face is clearly visible.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            {% for ref in references %}
+            <div style="position: relative; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow-sm);">
+                <img src="{{ url_for('get_face_reference_image', ref_id=ref.id) }}" style="width: 100%; height: 130px; object-fit: cover;">
+                <div style="padding: 8px; text-align: center; font-size: 0.75rem; background: var(--bg-alt); border-top: 1px solid var(--border);">
+                    <span style="color: #10B981; font-weight: bold;">Quality: {{ ref.quality_status }}</span>
+                </div>
+                <form action="{{ url_for('delete_face_reference', ref_id=ref.id) }}" method="POST" style="position: absolute; top: 4px; right: 4px;" onsubmit="return confirm('Delete this reference image?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" style="background: rgba(220, 38, 38, 0.9); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;">&times;</button>
+                </form>
+            </div>
+            {% else %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 32px; background: var(--bg-alt); border-radius: 8px; color: var(--text-sec);">
+                No reference photos uploaded yet.
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if references|length < 5 %}
+        <form action="{{ url_for('upload_face_reference') }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 16px; align-items: center;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="file" name="reference_image" accept="image/*" required class="form-control" style="flex: 1;">
+            <button type="submit" class="btn btn-primary" onclick="this.innerHTML='Uploading...';">Upload Photo</button>
+        </form>
+        {% else %}
+        <div style="padding: 12px; background: #FEF9C3; color: #854D0E; border-radius: 6px; border: 1px solid #FEF08A;">
+            Maximum 5 reference images reached. Delete an existing image before uploading another.
+        </div>
+        {% endif %}
     </div>
 </div>
 

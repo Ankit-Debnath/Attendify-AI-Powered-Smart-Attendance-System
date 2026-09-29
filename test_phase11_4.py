@@ -110,12 +110,15 @@ class Phase11_4_TestCase(unittest.TestCase):
         self.assertIn(b'Unauthorized access', rv.data)
         
     def test_G_csrf_protection(self):
+        app.config['WTF_CSRF_ENABLED'] = True
         self.login('s1@example.com', 'password')
         img_bytes = self.get_image_bytes('tests/temp/lena.jpg')
         data = {'name': 'S1', 'course': 'C1', 'semester': '1', 'profile_picture': (io.BytesIO(img_bytes), 'lena.jpg')}
         
         # Raw test client to bypass CSRF wrapper
-        rv = app.test_client().post('/student/profile/edit', data=data, content_type='multipart/form-data', follow_redirects=True)
+        raw_client = app.test_client()
+        raw_client.post('/login', data=dict(email='s1@example.com', password='password'), follow_redirects=True)
+        rv = raw_client.post('/student/profile/edit', data=data, content_type='multipart/form-data', follow_redirects=True)
         self.assertEqual(rv.status_code, 400)
         self.assertIn(b'Bad Request', rv.data)
 
